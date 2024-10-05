@@ -1,28 +1,26 @@
 <?php
 
-namespace App\Events\Task;
+namespace App\Events\TaskGroup;
 
-use App\Models\Task;
+use App\Models\TaskGroup;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class AttachmentDeleted implements ShouldBroadcast
+class TaskGroupCreated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public int $taskId;
+    public TaskGroup $taskGroup;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(
-        private Task $task,
-        public int $attachmentId,
-    ) {
-        $this->taskId = $task->id;
+    public function __construct(TaskGroup $taskGroup)
+    {
+        $this->taskGroup = $taskGroup;
 
         $this->dontBroadcastToCurrentUser();
     }
@@ -35,7 +33,7 @@ class AttachmentDeleted implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel("App.Models.Project.{$this->task->project_id}"),
+            new PrivateChannel("App.Models.Project.{$this->taskGroup->project_id}"),
         ];
     }
 }

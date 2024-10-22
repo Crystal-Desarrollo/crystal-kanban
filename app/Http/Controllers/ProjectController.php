@@ -67,7 +67,7 @@ class ProjectController extends Controller
 
         $project = Project::create($data);
 
-        $project->users()->attach($data['users']);
+        //$project->users()->attach($data['users']);
 
         $project->taskGroups()->createMany([
             ['name' => 'Backlog'],

@@ -31,7 +31,7 @@ client.on('messageCreate', async message => {
 
   try {
     // Local only: Disable SSL verification for local development
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
     const response = await fetch(`${process.env.API_URL}/tasks`, {
       method: 'POST',

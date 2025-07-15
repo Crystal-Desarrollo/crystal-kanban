@@ -1,0 +1,10 @@
+{
+  "name": "discord-n8n-bot",
+  "version": "1.0.0",
+  "main": "bot.js",
+  "dependencies": {
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.0.0",
+    "node-fetch": "^2.6.7"
+  }
+}

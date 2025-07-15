@@ -28,17 +28,17 @@ class CreateTask
 
             $task = $project->tasks()->create([
                 'group_id' => $data['group_id'],
-                'created_by_user_id' => auth()->id(),
+                'created_by_user_id' => $data['created_by_user_id'] ?? auth()->id(),
                 'assigned_to_user_id' => $data['assigned_to_user_id'],
                 'name' => $data['name'],
                 'number' => $project->tasks()->withArchived()->count() + 1,
                 'description' => $data['description'],
-                'due_on' => $data['due_on'],
-                'estimation' => $data['estimation'],
+                'due_on' => $data['due_on'] ?? null,
+                'estimation' => $data['estimation'] ?? null,
                 'pricing_type' => $data['pricing_type'],
-                'fixed_price' => $data['fixed_price'],
-                'hidden_from_clients' => $data['hidden_from_clients'],
-                'billable' => $data['billable'],
+                'fixed_price' => $data['fixed_price'] ?? null,
+                'hidden_from_clients' => $data['hidden_from_clients'] ?? false,
+                'billable' => $data['billable'] ?? true,
                 'completed_at' => null,
             ]);
 

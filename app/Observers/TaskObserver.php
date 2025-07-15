@@ -13,9 +13,9 @@ class TaskObserver
     {
         $task->activities()->create([
             'project_id' => $task->project_id,
-            'user_id' => auth()->id(),
+            'user_id' => $task->created_by_user_id,
             'title' => 'New task',
-            'subtitle' => "\"{$task->name}\" was created by ".auth()->user()->name,
+            'subtitle' => "\"{$task->name}\" was created by ".$task->createdByUser->name,
         ]);
 
         if ($task->assigned_to_user_id !== null) {

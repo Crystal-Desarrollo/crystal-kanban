@@ -18,16 +18,28 @@ client.on('messageCreate', async message => {
   if (message.author.bot) return;
   if (!message.content.startsWith('!kanban')) return;
 
+  const lines = message.content.replace('!kanban', '').trim().split(/\r?\n/);
+  const [title, ...rest] = lines;
+  const description = rest.join('\n').trim();
+
+  if (!title || !description) {
+    await message.channel.send(
+      '❌ El mensaje debe tener un título y una descripción en líneas separadas.'
+    );
+    return;
+  }
+
   try {
     // Local only: Disable SSL verification for local development
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
     const response = await fetch(`${process.env.API_URL}/tasks`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
         username: message.author.username,
-        content: message.content.replace('!kanban', '').trim(),
+        title: title.trim(),
+        description,
       }),
     });
 
@@ -55,6 +67,8 @@ client.on('messageCreate', async message => {
       );
     }
   } catch (err) {
+    console.error('Error al crear la tarea:', err);
+
     await message.channel.send(`❌ Error al crear la tarea: ${err.message}`);
   }
 });

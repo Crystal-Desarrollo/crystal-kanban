@@ -23,40 +23,22 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::post('tasks', function (Request $request) {
-    $fields = [
-        'proyecto' => null,
-        'titulo' => null,
-        'descripcion' => null,
-        'usuario' => null,
-    ];
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+    ]);
 
-    foreach (preg_split('/\r?\n/', $request->input('content')) as $line) {
-        [$key, $value] = array_map('trim', explode(':', $line, 2) + [null, null]);
-        $key = strtolower($key);
-        if (array_key_exists($key, $fields)) {
-            $fields[$key] = $value;
-        }
-    }
-
-    $project = Project::where('name', 'like', "%{$fields['proyecto']}%")->first();
+    $project = Project::first();
 
     if (! $project) {
-        return response()->json([
-            'message' => 'Project not found',
-        ], 404);
-    }
-
-    if (empty($fields['titulo'])) {
-        return response()->json([
-            'message' => 'Title is required',
-        ], 422);
+        return response()->json(['message' => 'No hay proyectos configurados.'], 500);
     }
 
     $task = (new CreateTask)->create($project, [
-        'name' => $fields['titulo'],
-        'description' => $fields['descripcion'] ?? '',
+        'name' => $request->input('title'),
+        'description' => $request->input('description'),
         'created_by_user_id' => User::first()->id,
-        'assigned_to_user_id' => isset($fields['usuario']) ? User::where('name', 'like', "%{$fields['usuario']}%")->first()->id ?? null : null,
+        'assigned_to_user_id' => null,
         'group_id' => $project->taskGroups()->orderBy('order_column')->first()->id,
         'pricing_type' => PricingType::HOURLY->value,
     ]);

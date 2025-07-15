@@ -19,6 +19,15 @@ client.on('messageCreate', async message => {
   if (!message.content.startsWith('!kanban')) return;
 
   const lines = message.content.replace('!kanban', '').trim().split(/\r?\n/);
+
+  // Buscar línea con user:
+  let user = null;
+  const userLineIndex = lines.findIndex(line => line.toLowerCase().startsWith('user:'));
+  if (userLineIndex !== -1) {
+    user = lines[userLineIndex].split(':')[1]?.trim();
+    lines.splice(userLineIndex, 1); // quitar esa línea del contenido general
+  }
+
   const [title, ...rest] = lines;
   const description = rest.join('\n').trim();
 
@@ -40,6 +49,7 @@ client.on('messageCreate', async message => {
         username: message.author.username,
         title: title.trim(),
         description,
+        user: user ? user.trim() : null,
       }),
     });
 

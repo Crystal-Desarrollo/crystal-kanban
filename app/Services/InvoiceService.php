@@ -5,9 +5,9 @@ namespace App\Services;
 use App\Models\Invoice;
 use App\Models\OwnerCompany;
 use App\Models\Task;
-use LaravelDaily\Invoices\Classes\InvoiceItem;
+use App\Services\Invoice\Invoice as InvoiceGenerator;
+use App\Services\Invoice\InvoiceItem;
 use LaravelDaily\Invoices\Classes\Party;
-use LaravelDaily\Invoices\Invoice as InvoiceGenerator;
 
 class InvoiceService
 {
@@ -23,7 +23,7 @@ class InvoiceService
         $owner = new Party([
             'name' => $ownerCompany->name,
             'phone' => $ownerCompany->phone,
-            'address' => "$ownerCompany->address, $ownerCompany->postal_code $ownerCompany->city, {$ownerCompany->country->name}",
+            'address' => "$ownerCompany->address, $ownerCompany->postal_code $ownerCompany->city, {$ownerCompany->country?->name}",
             'custom_fields' => [
                 'business id' => $ownerCompany->business_id,
                 'tax id' => $ownerCompany->tax_id,
@@ -33,7 +33,7 @@ class InvoiceService
 
         $client = new Party([
             'name' => $clientCompany->name,
-            'address' => "$clientCompany->address, $clientCompany->postal_code $clientCompany->city, {$clientCompany->country->name}",
+            'address' => "$clientCompany->address, $clientCompany->postal_code $clientCompany->city, {$clientCompany->country?->name}",
             'custom_fields' => [
                 'business id' => $clientCompany->business_id,
                 'tax id' => $clientCompany->tax_id,
@@ -41,12 +41,35 @@ class InvoiceService
             ],
         ]);
 
-        $items = $invoice->tasks->map(function (Task $task) use ($invoice) {
-            return InvoiceItem::make($task->name)
-                ->pricePerUnit($invoice->hourly_rate / 100)
-                ->quantity(round($task->total_minutes / 60, 2))
-                ->units('hours');
-        });
+        $items = [];
+
+        // Fixed amount invoice
+        // dd($invoice->toArray());
+        if ($invoice->isFixedAmount()) {
+            foreach ($invoice->tasks as $index => $task) {
+                $items[] = InvoiceItem::make($task->name)
+                    ->pricePerUnit($index === 0 ? $invoice->amount / 100 : 0)
+                    ->quantity(1);
+            }
+        } else {
+            // Default invoice
+            $items = $invoice->tasks->map(function (Task $task) use ($invoice) {
+                if ($task->isFixedPrice()) {
+                    // Fixed price task
+                    return InvoiceItem::make($task->name)
+                        ->pricingType($task->pricing_type->value)
+                        ->pricePerUnit($task->price / 100)
+                        ->quantity(1);
+                } else {
+                    // Hourly task
+                    return InvoiceItem::make($task->name)
+                        ->pricingType($task->pricing_type->value)
+                        ->pricePerUnit($invoice->hourly_rate / 100)
+                        ->quantity(round($task->total_minutes / 60, 2))
+                        ->units('hours');
+                }
+            });
+        }
 
         $filename = today()->year.'/'.$invoice->number.' - '.trim($client->name);
 
@@ -64,6 +87,7 @@ class InvoiceService
 
         $pdf->sequence($invoice->number)
             ->serialNumberFormat('{SEQUENCE}')
+            ->type($invoice->type)
             ->seller($owner)
             ->buyer($client)
             ->date($invoice->created_at)
